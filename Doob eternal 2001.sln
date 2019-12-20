@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Doob eternal 2001", "Doob eternal 2001.csproj", "{164111AC-DC94-43D9-A059-91DFB8272116}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{164111AC-DC94-43D9-A059-91DFB8272116}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{164111AC-DC94-43D9-A059-91DFB8272116}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{164111AC-DC94-43D9-A059-91DFB8272116}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{164111AC-DC94-43D9-A059-91DFB8272116}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1939ECBE-9D89-4F9E-B28E-D1707D63C4DC}
+	EndGlobalSection
+EndGlobal
