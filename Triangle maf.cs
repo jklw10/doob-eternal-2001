@@ -10,7 +10,6 @@ namespace Doob_eternal_2001
     class Shape
     {
         public Vector[] Corners;
-        public Color Color;
         public Shape(params Vector[] corners)
         {
             Corners = corners;
@@ -23,6 +22,26 @@ namespace Doob_eternal_2001
                 returned.Add(new PointF((float)place.X,(float)place.Y));
             }
             return returned.ToArray();
+        }
+        public void Move(Vector movement)
+        {
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                Corners[i] += movement;
+            }
+        }
+        public void Scale(Vector scale)
+        {
+            Vector tempVal = (0,0);
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                tempVal += Corners[i];
+            }
+            Vector middle = tempVal / Corners.Length;
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                Corners[i] = (middle - Corners[i]) *scale +middle;
+            }
         }
     }
 }
