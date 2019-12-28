@@ -49,5 +49,19 @@ namespace Doob_eternal_2001
             }
             WallHeight = wallHeight;
         }
+        public void Rotate(double angle, double wallHeight)
+        {
+            Vector tempVal = (0, 0);
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                tempVal += Corners[i];
+            }
+            Vector middle = tempVal / Corners.Length;
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                Corners[i] = Vector.RotateVector(middle - Corners[i],angle) + middle;
+            }
+            WallHeight = wallHeight;
+        }
     }
 }
