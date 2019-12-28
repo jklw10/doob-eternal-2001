@@ -13,51 +13,50 @@ namespace Doob_eternal_2001
 {
     public partial class Game : Form
     {
-        double deg2rad = 1f/ 180f * Math.PI;
-        Rectangle[] lines;
+        double deg2rad = 1f / 180f * Math.PI;
         private Brush brush = new SolidBrush(Color.FromArgb(255, 0, 125, 0));
-        //Brush debugbrush = new SolidBrush(Color.FromArgb(255, 255,0, 0));
-        List<Shape> map = new List<Shape>();
-        Player player = new Player(new Vector(0, 0), (float)Math.PI);
-        //Bitmap prevFrame;
-        //Queue<Bitmap> frameBuffer = new Queue<Bitmap>();
+        static List<Shape> ToDraw = new List<Shape>();
+        Player player = new Player(new Vector(0, 0), 1, (float)Math.PI);
         int fov = 90;
-        int screenWidth = 200;
-        //int scale = 10;
-        //double d = 0;
-        //Vector examplePos = (400, 400);
+        int screenWidth = 400;
+        int screenHeight = 400;
         Vector mouseDelta;
         Vector prevMousePos;
-        //Thread updateThread;
         public Game()
         {
             InitializeComponent();
             DoubleBuffered = true;
-            
+
+        }
+        internal static void UpdateToDraw(List<Shape> newShapeList)
+        {
+            ToDraw = newShapeList;
         }
         
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-
-            mouseDelta = (Vector)e.Location - prevMousePos;
-            player.Rotation += (mouseDelta.X /200) ;
-            prevMousePos = (Vector)e.Location;
-            Refresh();
-        }
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            ///*
-            //e.Graphics.DrawLine(new Pen(debugbrush), (Point)player.Position, (Point)(Vector.RadiansToVector(player.Rotation, 20)));
-            for (int x = 0; x < lines.Length; x++)
+            for (int x = 0; x < screenWidth; x++)
             {
-                int lineHeight = Clamp(ShootTowards(x), 0, 255);
-                lines[x] = new Rectangle(new Point(50 + x * 2, 50 + (255 - lineHeight) / 2), new Size(2, lineHeight));
-                brush = new SolidBrush(Color.FromArgb(255, 0, lines[x].Height, 0));
-                e.Graphics.FillRectangle(brush, lines[x]);
+                int lineHeight;
+                Shape line;
+                foreach (RayCast cast in ShootTowards(x))
+                {
+                    lineHeight = Clamp((int)((screenWidth / cast.Length) * cast.WallHeight), 0, screenHeight);
+                    line = new Shape(cast.Z, cast.WallHeight, (50 + x, 50 + (screenHeight - lineHeight) / 2), (50 + x, 50 + (screenHeight + lineHeight) / 2));
+                    int WallDistance = Clamp((int)(screenWidth / cast.Length), 1, 255);
+                    brush = new SolidBrush(Color.FromArgb(255, 0, WallDistance, 0));
+                    e.Graphics.DrawLine(new Pen(brush), (Point)line.Corners[0], (Point)line.Corners[1]);
+                }
             }
         }
+        /// <summary>
+        /// clamps a value between min and max
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public int Clamp(int value, int min, int max)
         {
             if (value < min)
@@ -70,78 +69,86 @@ namespace Doob_eternal_2001
             }
             return value;
         }
-        private void Game_Paint(object sender, PaintEventArgs e)
-        {
-        }
         private void Game_Load(object sender, EventArgs e)
         {
-            Shape tri   = new Shape((1, 0), (1, 1), (0, 1));
-            Shape rect = new Shape((3, 3), (3, 4), (2, 4), (2, 3));
-            Shape rect2 = new Shape((3, 3), (3, 4), (2, 4), (2, 3));
-            rect2.Move((2, 2));
-            rect2.Scale((20, 20));
-            map.Add(rect2);
-            map.Add(tri);
-            map.Add(rect);
-            lines = new Rectangle[screenWidth];
+            Shape tri = new Shape(1, 1, (1, 0), (1, 1), (0, 1));
+            Shape rect = new Shape(1, 1, (1, 0), (0, 0), (0, 1), (1, 1));
+            Shape rect2 = new Shape(1, 1, (1, 0), (0, 0), (0, 1), (1, 1));
+            rect.Move((2, 2), 10);
+            rect2.Scale((20, 20), 20);
+            ToDraw.Add(rect2);
+            ToDraw.Add(tri);
+            ToDraw.Add(rect);
 
         }
-        public int ShootTowards(double x)
+        /// <summary>
+        /// shoots a ray between 0-screenwidth
+        /// </summary>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        Queue<RayCast> ShootTowards(double x)
         {
             double RayHitDistance = 0;
-            double DepthBuffer = double.MaxValue; 
+            Queue<RayCast> casts = new Queue<RayCast>();
+            List<RayCast> castsUnsorted = new List<RayCast>();
             //do the raycast for all the shapes in the map
-            foreach (Shape shape in map)
+            for (int i = 0; i < ToDraw.Count; i++)
             {
+                Shape shape = ToDraw[i];
                 //go through all corners in a shape
-                foreach(Vector corner in shape.Corners)
+                foreach (Vector corner in shape.Corners)
                 {
                     //connect this corner to the next corner for a line to intersect check with.
-                    for(int a = 0; a < shape.Corners.Length; a++)
+                    for (int a = 0; a < shape.Corners.Length; a++)
                     {
-                        int b = a+1;
-                        if(a == shape.Corners.Length - 1)
+                        int b = a + 1;
+                        if (a == shape.Corners.Length - 1)
                         {
                             b = 0;
                         }
                         Vector CornerA = shape.Corners[a];
                         Vector CornerB = shape.Corners[b];
-                        Vector CameraRay = Vector.RadiansToVector((player.Rotation - fov*deg2rad)+ (x / (screenWidth*2)) * fov * deg2rad, 1);
-                        
+                        Vector CameraRay = Vector.RadiansToVector((player.Rotation - fov * deg2rad) + (x / (screenWidth * 2)) * fov * deg2rad, 1);
+
                         double CurrentRayHitDistance = 0;
-                        
+
                         if (Vector.RayCast(player.Position, CameraRay, CornerA, CornerB, out Vector intersect))
                         {
-                            CurrentRayHitDistance = (intersect-player.Position).Magnitude;
-                            if (CurrentRayHitDistance < DepthBuffer)
-                            {
-                                RayHitDistance = CurrentRayHitDistance;
-                                DepthBuffer = CurrentRayHitDistance;
-                                //e.Graphics.FillRectangle(debugbrush, new Rectangle((Point)(examplePos + (intersect) * scale), new Size(3, 3)));
-                            }
-                            
-
-                        }
-                        if(Vector.IsBetween(CameraRay + player.Position, CornerA, CornerB))
-                        {
-                            //e.Graphics.FillRectangle(debugbrush, new Rectangle((Point)(examplePos + (CameraRay + player.Position) * scale), new Size(3, 3)));
+                            CurrentRayHitDistance = (intersect - player.Position).Magnitude;
+                            castsUnsorted.Add(new RayCast(CurrentRayHitDistance, ToDraw[i].WallHeight, ToDraw[i].Z));
                         }
                     }
                 }
             }
-            if(RayHitDistance != 0 )
+            castsUnsorted.Sort();
+            foreach ( RayCast cast in castsUnsorted)
             {
-                return (int)(screenWidth / RayHitDistance);
+                casts.Enqueue(cast);
+            }
+            
+            if (RayHitDistance != 0)
+            {
+                return casts;
             }
             else
             {
-                return 0;
+                casts.Enqueue(new RayCast(0, 0, 0));
+                return casts;
             }
         }
-        
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+
+            mouseDelta = (Vector)e.Location - prevMousePos;
+            player.Rotation += (mouseDelta.X / 200);
+            prevMousePos = (Vector)e.Location;
+            this.Invalidate();
+            this.Update();
+        }
         private void Game_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if(e.KeyChar == 's')
+            if (e.KeyChar == 's')
             {
                 player.Position += Vector.RotateVector(new Vector(0, 0.1), player.Rotation + Math.PI / 4);
             }
@@ -165,10 +172,8 @@ namespace Doob_eternal_2001
             {
                 player.Rotation += 0.1;
             }
-            
-            this.Refresh();
-            
+            this.Invalidate();
+            this.Update();
         }
-        
     }
 }

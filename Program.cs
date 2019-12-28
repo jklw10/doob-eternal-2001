@@ -16,6 +16,7 @@ namespace Doob_eternal_2001
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            
             Application.Run(new Game());
         }
     }

@@ -220,7 +220,7 @@ namespace Doob_eternal_2001
         public static bool IsBetween(Vector vectorTarget, Vector vectorHigh, Vector vectorLow)
         {
             double Accuracy = DotProduct(vectorHigh, vectorLow);
-            Vector Median = (vectorHigh+vectorLow)/2;// = ThetaOf(vectorLow, vectorHigh);
+            Vector Median = (vectorHigh+vectorLow)/2;
             return ((1-DotProduct(vectorTarget, Median) <= (1-Accuracy)/2 && 1- DotProduct(vectorTarget, Median) <= (1 - Accuracy )/ 2));
             
         }
@@ -229,33 +229,27 @@ namespace Doob_eternal_2001
             double A1 = b.Y - a.Y;
             double B1 = a.X - b.X;
             double C1 = A1 * a.X + B1 * a.Y;
+
             double A2 = d.Y - c.Y;
             double B2 = c.X - d.X;
             double C2 = A2 * c.X + B2 * c.Y;
+
             double denominator = A1 * B2 - A2 * B1;
             if(denominator == 0) 
             {
                 intersection = new Vector();
                 return false;
             }
-            intersection = new Vector((B1*C1-B1*C2)/denominator,(A1*C2-A2*C1)/denominator);
+            intersection = new Vector((B2*C1-B1*C2)/denominator,(A1*C2-A2*C1)/denominator);
             return true;
+        }
+        public static bool SegmentIntersect(Shape a, Shape b, out Vector vectOut)
+        {
+            return SegmentIntersect(a.Corners[0], a.Corners[1], b.Corners[0], b.Corners[1], out vectOut);
         }
         public static bool SegmentIntersect(Vector a, Vector b, Vector c, Vector d, out Vector vectOut)
         {
-            double A1 = b.Y - a.Y;
-            double B1 = a.X - b.X;
-            double C1 = A1 * a.X + B1 * a.Y;
-            double A2 = d.Y - c.Y;
-            double B2 = c.X - d.X;
-            double C2 = A2 * c.X + B2 * c.Y;
-            double denominator = A1 * B2 - A2 * B1;
-            if (denominator == 0)
-            {
-                vectOut = new Vector();
-                return false;
-            }
-            Vector intersection = new Vector((B1 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator);
+            LineIntersect(a,b,c,d, out Vector intersection);
             Vector ABRatio = new Vector((intersection.X - a.X) / (b.X - a.X), (intersection.Y - a.Y) / (b.Y - a.Y));
             Vector CDRatio = new Vector((intersection.X - c.X) / (d.X - c.X), (intersection.Y - c.Y) / (d.Y - c.Y));
             if  (
@@ -272,35 +266,18 @@ namespace Doob_eternal_2001
         public static bool RayCast(Vector start, Vector direction, Vector c, Vector d, out Vector vectOut)
         {
             Vector b = start + direction;
-            double A1 = b.Y - start.Y;
-            double B1 = start.X - b.X;
-            double C1 = A1 * start.X + B1 * start.Y;
-            double A2 = d.Y - c.Y;
-            double B2 = c.X - d.X;
-            double C2 = A2 * c.X + B2 * c.Y;
-            double denominator = A1 * B2 - A2 * B1;
-            if (denominator == 0)
+            LineIntersect(start, b, c, d, out Vector intersection);
+            if (DotProduct(intersection-start,direction) >=0)
             {
-                vectOut = new Vector();
-                return false;
-            }
-            Vector intersection = new Vector((B1 * C1 - B1 * C2) / denominator, (A1 * C2 - A2 * C1) / denominator);
-            if ((c-intersection).Magnitude+(d-intersection).Magnitude-double.Epsilon <= (c-d).Magnitude)
-            {
-                vectOut = intersection;
-                return true;
+                if ((c - intersection).Magnitude + (d - intersection).Magnitude - double.Epsilon <= (c - d).Magnitude)
+                {
+                    vectOut = intersection;
+                    return true;
+                }
             }
             vectOut = intersection;
             return false;
         }
-        /*public static double middleOf(double a,double b)
-        {
-            Vector A = RadiansToVector(a, 1);
-            Vector B = RadiansToVector(b, 1);
-            double middle = VectorToRadians((A+B)/2);
-            return null;
-        }//*/
-
         /// <summary>
         /// swaps the places of X and Y. Mostly because OpenTK
         /// </summary>
@@ -310,12 +287,6 @@ namespace Doob_eternal_2001
         {
             return new Vector(Y, X);
         }
-
-        // Frankenstein was here
-        /*public static implicit operator Angle(Vector v)
-        {
-            return new Angle(v.Angle);
-        }*/
 
         public static explicit operator Vector(Point w)
         {
@@ -350,10 +321,6 @@ namespace Doob_eternal_2001
             return new Vector(position.x, position.y);
         }
 
-        /*public static explicit operator Vector(Tuple<double, double> v)
-        {
-            return (v.X,v.Y);
-        }//*/
 
         /// <summary>
         /// returns angle difference of 2 vectors

@@ -9,11 +9,12 @@ namespace Doob_eternal_2001
     class Player
     {
         public Vector Position { get; set; }
-        double rotation;
-        public double Rotation;
-        public Player(Vector pos, float rot)
+        public double Height { get; set; }
+        public double Rotation { get; set; }
+        public Player(Vector pos, double z, float rot)
         {
             Position = pos;
+            Height = z;
             Rotation = rot;
         }
     }
