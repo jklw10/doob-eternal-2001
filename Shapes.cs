@@ -12,11 +12,13 @@ namespace Doob_eternal_2001
         public Vector[] Corners;
         public double Z;
         public double WallHeight;
-        public Shape(double z,double wallHeight,params Vector[] corners)
+        public Color Color;
+        public Shape(double z,double wallHeight, Color color,params Vector[] corners)
         {
             Corners = corners;
             Z = z;
             WallHeight = wallHeight;
+            Color = color;
         }
         public static implicit operator PointF[](Shape v) 
         {
@@ -32,6 +34,20 @@ namespace Doob_eternal_2001
             for (int i = 0; i < Corners.Length; i++)
             {
                 Corners[i] += movement;
+            }
+            Z = z;
+        }
+        public void SetPos(Vector pos, double z)
+        {
+            Vector tempVal = (0, 0);
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                tempVal += Corners[i];
+            }
+            Vector middle = tempVal / Corners.Length;
+            for (int i = 0; i < Corners.Length; i++)
+            {
+                Corners[i] = ((0,0)-(middle - Corners[i])) + pos;
             }
             Z = z;
         }

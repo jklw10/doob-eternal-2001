@@ -100,6 +100,11 @@ namespace Doob_eternal_2001
             return RadiansToVector(Angle , 1);
         }
 
+        public Vector Normal()
+        {
+            return (-Y,X);
+        }
+
         /// <summary>
         /// See how similar 2 vectors are in angle.
         /// </summary>
@@ -269,7 +274,7 @@ namespace Doob_eternal_2001
             LineIntersect(start, b, c, d, out Vector intersection);
             if (DotProduct(intersection-start,direction) >=0)
             {
-                if ((c - intersection).Magnitude + (d - intersection).Magnitude - double.Epsilon <= (c - d).Magnitude)
+                if ((c - intersection).Magnitude + (d - intersection).Magnitude - 0.0000001 <= (c - d).Magnitude)
                 {
                     vectOut = intersection;
                     return true;
@@ -304,6 +309,7 @@ namespace Doob_eternal_2001
         {
             return new double[]{v.X, v.Y};
         }
+        
         public static implicit operator object[,](Vector v)
         {
             return new object[(int)v.X, (int)v.Y];

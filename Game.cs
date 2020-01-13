@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -6,27 +7,43 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Threading;
 using System.Windows.Forms;
 
 namespace Doob_eternal_2001
 {
     public partial class Game : Form
     {
-        double deg2rad = 1f / 180f * Math.PI;
-        private Brush brush = new SolidBrush(Color.FromArgb(255, 0, 125, 0));
+        readonly double deg2rad = 1f / 180f * Math.PI;
         static List<Shape> ToDraw = new List<Shape>();
-        Player player = new Player(new Vector(0, 0), 1, (float)Math.PI);
-        int fov = 90;
-        int screenWidth = 400;
-        int screenHeight = 400;
+        readonly Player player = new Player(new Vector(0, 0), 0, (float)Math.PI);
+        readonly int fov = 180;
+        readonly int screenWidth = 800;
+        readonly int screenHeight = 400;
+        double t = 0;
         Vector mouseDelta;
         Vector prevMousePos;
+        long LFT = 0;
+        System.Diagnostics.Stopwatch watch;
         public Game()
         {
+
+            watch = System.Diagnostics.Stopwatch.StartNew();
             InitializeComponent();
             DoubleBuffered = true;
+            Width = screenWidth;
+            Height = screenHeight;
 
+            Timer timer = new Timer();
+            timer.Interval = (1000/120); // 120fps
+            timer.Tick += new EventHandler(Tick);
+            timer.Start();
+        }
+
+        private void Tick(object sender, EventArgs e)
+        {
+
+            Invalidate();
+            Update();
         }
         internal static void UpdateToDraw(List<Shape> newShapeList)
         {
@@ -36,49 +53,76 @@ namespace Doob_eternal_2001
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+
+            Brush brush = new SolidBrush(Color.FromArgb(255, 0, 125, 0));
+            Pen pen = new Pen(brush);
+            Shader s = new Shader(Color.Black);
             for (int x = 0; x < screenWidth; x++)
             {
                 int lineHeight;
                 Shape line;
                 foreach (RayCast cast in ShootTowards(x))
                 {
-                    lineHeight = Clamp((int)((screenWidth / cast.Length) * cast.WallHeight), 0, screenHeight);
-                    line = new Shape(cast.Z, cast.WallHeight, (50 + x, 50 + (screenHeight - lineHeight) / 2), (50 + x, 50 + (screenHeight + lineHeight) / 2));
-                    int WallDistance = Clamp((int)(screenWidth / cast.Length), 1, 255);
-                    brush = new SolidBrush(Color.FromArgb(255, 0, WallDistance, 0));
-                    e.Graphics.DrawLine(new Pen(brush), (Point)line.Corners[0], (Point)line.Corners[1]);
+                    double wallDistance = Math.Sqrt(cast.Length * cast.Length + cast.Z * cast.Z);
+                    double depthMulti = screenWidth / wallDistance;
+                    lineHeight = (int)(depthMulti * cast.WallHeight);
+                    line = new Shape(0, 0, cast.Color, ( x, depthMulti * cast.Z+(screenHeight - lineHeight) / 2), (x, depthMulti* cast.Z+(screenHeight + lineHeight) / 2));
+                    s = cast.Color;
+                    s /= 255 *( Math.Pow(wallDistance/cast.WallHeight /255,1));
+                    
+                    pen.Color = s;
+                    e.Graphics.DrawLine(pen, (Point)line.Corners[0], (Point)line.Corners[1]);
+                    brush.Dispose();
                 }
             }
-        }
-        /// <summary>
-        /// clamps a value between min and max
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="min"></param>
-        /// <param name="max"></param>
-        /// <returns></returns>
-        public int Clamp(int value, int min, int max)
-        {
-            if (value < min)
+            using ( Brush brush2 = new SolidBrush(Color.FromArgb(255, 255, 0, 0)))
             {
-                value = min;
+                Font font = new Font("Arial", 16);
+                e.Graphics.DrawString("ms since last frame: " + LFT, font, brush2, 50, 50);
             }
-            else if (value > max)
+
+            /*
+            foreach (Shape shape in ToDraw)
             {
-                value = max;
-            }
-            return value;
+                shape.Scale((100, 100), 1);
+                e.Graphics.DrawPolygon(new Pen(Brushes.Red), shape.Corners.Select(x => new PointF((float)x.X+50, (float)x.Y+50)).ToArray());
+
+                shape.Scale((0.01, 0.01), 1);
+            }*/
+            t += 0.1;
+            ToDraw[1].SetPos((0,0), Math.Sin(t)/10);
+
+            LFT = watch.ElapsedMilliseconds;
+
+            watch = System.Diagnostics.Stopwatch.StartNew();
         }
         private void Game_Load(object sender, EventArgs e)
         {
-            Shape tri = new Shape(1, 1, (1, 0), (1, 1), (0, 1));
-            Shape rect = new Shape(1, 1, (1, 0), (0, 0), (0, 1), (1, 1));
-            Shape rect2 = new Shape(1, 1, (1, 0), (0, 0), (0, 1), (1, 1));
-            rect.Move((2, 2), 10);
-            rect2.Scale((20, 20), 20);
+            Shape tri   = new Shape(1, 1,Color.Blue, (1, 0), (1, 1), (0, 1));
+            Shape rect  = new Shape(1, 1,Color.Blue, (1, 0), (0, 0), (0, 1), (1, 1));
+            int cornerc = 8;
+            Vector[] starCorners = new Vector[cornerc];
+
+            double starRots = (360 / cornerc) * deg2rad;
+            for (int i = 0; i < starCorners.Length; i++)
+            {
+                //if (i % 2 == 0)
+                //{ 
+                //    starCorners[i] = Vector.RotateVector((1 , 0),starRots*i);
+                //}
+                //else
+                {
+                    starCorners[i] = Vector.RotateVector((0.5 + (i%2), 0), starRots * i);
+                }
+            }
+            Shape treePart = new Shape(0, 1, new Shader(125, 0, 0, 125), starCorners);
+            tri.Scale((1,1),0.2);
+            
+            Shape rect2 = new Shape(-1, 1, new Shader(255,0,125,0),(1, 0), (0, 0), (0, 1), (1, 1));
+            rect.Move((2, 2), 0);
+            rect2.Scale((20, 20), 5);
             ToDraw.Add(rect2);
             ToDraw.Add(tri);
-            ToDraw.Add(rect);
 
         }
         /// <summary>
@@ -106,16 +150,15 @@ namespace Doob_eternal_2001
                         {
                             b = 0;
                         }
-                        Vector CornerA = shape.Corners[a];
-                        Vector CornerB = shape.Corners[b];
+                        
                         Vector CameraRay = Vector.RadiansToVector((player.Rotation - fov * deg2rad) + (x / (screenWidth * 2)) * fov * deg2rad, 1);
 
                         double CurrentRayHitDistance = 0;
 
-                        if (Vector.RayCast(player.Position, CameraRay, CornerA, CornerB, out Vector intersect))
+                        if (Vector.RayCast(player.Position, CameraRay, shape.Corners[a], shape.Corners[b], out Vector intersect))
                         {
                             CurrentRayHitDistance = (intersect - player.Position).Magnitude;
-                            castsUnsorted.Add(new RayCast(CurrentRayHitDistance, ToDraw[i].WallHeight, ToDraw[i].Z));
+                            castsUnsorted.Add(new RayCast(CurrentRayHitDistance, ToDraw[i].WallHeight, ToDraw[i].Z-player.Height, ToDraw[i].Color));
                         }
                     }
                 }
@@ -132,7 +175,7 @@ namespace Doob_eternal_2001
             }
             else
             {
-                casts.Enqueue(new RayCast(0, 0, 0));
+                casts.Enqueue(new RayCast(0, 0, 0,Color.White));
                 return casts;
             }
         }
@@ -150,19 +193,20 @@ namespace Doob_eternal_2001
         {
             if (e.KeyChar == 's')
             {
-                player.Position += Vector.RotateVector(new Vector(0, 0.1), player.Rotation + Math.PI / 4);
+                player.Position += Vector.RotateVector(new Vector(0, 0.1), player.Rotation );
+
             }
             if (e.KeyChar == 'w')
             {
-                player.Position -= Vector.RotateVector(new Vector(0, 0.1), player.Rotation + Math.PI / 4);
+                player.Position -= Vector.RotateVector(new Vector(0, 0.1), player.Rotation );
             }
             if (e.KeyChar == 'd')
             {
-                player.Position += Vector.RotateVector(new Vector(0.1, 0), player.Rotation + Math.PI / 4);
+                player.Position += Vector.RotateVector(new Vector(0.1, 0), player.Rotation );
             }
             if (e.KeyChar == 'a')
             {
-                player.Position -= Vector.RotateVector(new Vector(0.1, 0), player.Rotation + Math.PI / 4);
+                player.Position -= Vector.RotateVector(new Vector(0.1, 0), player.Rotation );
             }
             if (e.KeyChar == 'q')
             {
@@ -174,6 +218,11 @@ namespace Doob_eternal_2001
             }
             this.Invalidate();
             this.Update();
+        }
+
+        private void ExitButton_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
         }
     }
 }
