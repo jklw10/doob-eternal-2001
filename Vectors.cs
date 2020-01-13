@@ -15,18 +15,23 @@ namespace Doob_eternal_2001
         public double X {get; set;}
         public double Y {get; set;}
 
-        public Vector THIS { get { return this; } set { X = value.X; Y = value.Y; } }
         public double Magnitude 
         {
-            get {return Math.Sqrt(Math.Pow(X, 2) + Math.Pow(Y, 2));}
+            get {return Math.Sqrt(X*X + Y*Y);}
             private set { }
             
+        }
+        public double MagnitudeSquared
+        {
+            get { return (X*X + Y*Y); }
+            private set { }
+
         }
 
         public double Angle
         {
             get {return VectorToRadians(this); }
-            set{ THIS = RadiansToVector(value, Magnitude); }
+            private set{ }
         }
 
         /// <summary>
@@ -117,6 +122,10 @@ namespace Doob_eternal_2001
             Vector B = b.Normalize();
             return (A.X * B.X + A.Y * B.Y);
         }
+        public static double ANormalDotProduct(Vector a, Vector b)
+        {
+            return (a.X * b.X + a.Y * b.Y);
+        }
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
@@ -166,7 +175,7 @@ namespace Doob_eternal_2001
 
         public int CompareTo(Vector other)
         {
-            return Magnitude.CompareTo(other.Magnitude);
+            return MagnitudeSquared.CompareTo(other.MagnitudeSquared);
         }
         public static bool operator >(Vector operand1, Vector operand2)
         {
@@ -272,10 +281,10 @@ namespace Doob_eternal_2001
         {
             Vector b = start + direction;
             LineIntersect(start, b, c, d, out Vector intersection);
-            if (DotProduct(intersection-start,direction) >=0)
+            if (ANormalDotProduct(intersection-start,direction) >=0)
             {
-                if ((c - intersection).Magnitude + (d - intersection).Magnitude - 0.0000001 <= (c - d).Magnitude)
-                {
+                if ((c - intersection).MagnitudeSquared + (d - intersection).MagnitudeSquared - 0.0000001 <= (c - d).MagnitudeSquared)
+                { 
                     vectOut = intersection;
                     return true;
                 }
@@ -327,17 +336,6 @@ namespace Doob_eternal_2001
             return new Vector(position.x, position.y);
         }
 
-
-        /// <summary>
-        /// returns angle difference of 2 vectors
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static double ThetaOf(Vector a, Vector b)
-        {
-            return (VectorToRadians(a) - VectorToRadians(b)); 
-        }
         
         /// <summary>
         /// Converts from X and Y to degrees;
@@ -350,26 +348,6 @@ namespace Doob_eternal_2001
             return 180 * (Math.Atan2(y, x) / Math.PI);
         }
 
-        /// <summary>
-        /// Converts from X and Y to degrees;
-        /// </summary>
-        /// <param name="coordinate"></param>
-        /// <returns></returns>
-        public static double VectorToDegrees(Vector coordinate)
-        {
-            return 180 * (Math.Atan2(coordinate.Y, coordinate.X) / Math.PI);
-        }
-
-        /// <summary>
-        /// converts from X and Y to radians;
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        public static double VectorToRadians(double x, double y)
-        {
-            return Math.Atan2(y, x);
-        }
 
         /// <summary>
         /// converts from a Vector to radians;

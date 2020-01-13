@@ -13,6 +13,7 @@ namespace Doob_eternal_2001
         public double Z;
         public double WallHeight;
         public Color Color;
+        public bool Collideable;
         public Shape(double z,double wallHeight, Color color,params Vector[] corners)
         {
             Corners = corners;

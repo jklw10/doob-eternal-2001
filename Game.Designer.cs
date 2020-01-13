@@ -38,7 +38,6 @@
             this.Name = "Game";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Game_Load);
-            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.Game_KeyPress);
             this.ResumeLayout(false);
 
         }
